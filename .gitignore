@@ -1,0 +1,13 @@
+bin/
+obj/
+.vs/
+.idea/
+.dotnet/
+TestResults/
+artifacts/
+tools/downloads/
+debug-report.json
+*.user
+*.suo
+*.log
+*.tmp

@@ -1,0 +1,45 @@
+{
+  "storagePowerOnHours": {
+    "weight": 0.24,
+    "lowUseValue": 150,
+    "highUseValue": 4500,
+    "description": "Disk power-on hours. Strong signal when SMART is available."
+  },
+  "storageWritesGb": {
+    "weight": 0.18,
+    "lowUseValue": 250,
+    "highUseValue": 25000,
+    "description": "Total host writes in GB for SSD/NVMe."
+  },
+  "storageHealth": {
+    "weight": 0.22,
+    "lowUseValue": 98,
+    "highUseValue": 70,
+    "description": "SMART health percent. Lower means worse condition."
+  },
+  "batteryCycles": {
+    "weight": 0.16,
+    "lowUseValue": 40,
+    "highUseValue": 650,
+    "description": "Battery cycle count. Ignored automatically on desktops."
+  },
+  "batteryWear": {
+    "weight": 0.14,
+    "lowUseValue": 5,
+    "highUseValue": 35,
+    "description": "Battery wear percent computed from design/full charge capacity."
+  },
+  "systemEventFrequency": {
+    "weight": 0.08,
+    "lowUseValue": 0.15,
+    "highUseValue": 2.2,
+    "description": "Boot/shutdown/sleep/resume events per day."
+  },
+  "windowsInstallAge": {
+    "weight": 0.04,
+    "lowUseValue": 30,
+    "highUseValue": 1500,
+    "description": "Windows install age in days. Weak signal because reinstalling Windows resets it."
+  },
+  "missingSignalConfidencePenalty": 0.09
+}

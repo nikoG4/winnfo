@@ -1,0 +1,278 @@
+<Window x:Class="Inspector.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Inspector.App.ViewModels"
+        Title="{DynamicResource AppTitle}"
+        Height="820"
+        Width="1180"
+        MinHeight="680"
+        MinWidth="980"
+        Background="#F4F7FA">
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI" />
+            <Setter Property="Foreground" Value="#17202A" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Margin" Value="4" />
+            <Setter Property="MinWidth" Value="96" />
+        </Style>
+        <Style x:Key="Panel" TargetType="Border">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#D9E2EC" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="16" />
+            <Setter Property="Margin" Value="0,0,0,14" />
+        </Style>
+        <Style x:Key="SignalRowStyle" TargetType="DataGridRow">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="ToolTip" Value="{Binding Kind}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Kind}" Value="{x:Static vm:SignalKind.Usage}">
+                    <Setter Property="Background" Value="#EAF4FF" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Kind}" Value="{x:Static vm:SignalKind.Age}">
+                    <Setter Property="Background" Value="#FFF7E6" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Kind}" Value="{x:Static vm:SignalKind.Health}">
+                    <Setter Property="Background" Value="#EAF8F0" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Kind}" Value="{x:Static vm:SignalKind.Warning}">
+                    <Setter Property="Background" Value="#FDECEC" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PowerOnHoursCellStyle" TargetType="DataGridCell">
+            <Setter Property="Background" Value="#EAF4FF" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding PowerOnHoursKind}" Value="{x:Static vm:SignalKind.Warning}">
+                    <Setter Property="Background" Value="#FDECEC" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="PowerCyclesCellStyle" TargetType="DataGridCell">
+            <Setter Property="Background" Value="#EAF4FF" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding PowerCyclesKind}" Value="{x:Static vm:SignalKind.Warning}">
+                    <Setter Property="Background" Value="#FDECEC" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="StorageHealthCellStyle" TargetType="DataGridCell">
+            <Setter Property="Background" Value="#EAF8F0" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HealthKind}" Value="{x:Static vm:SignalKind.Warning}">
+                    <Setter Property="Background" Value="#FDECEC" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="WritesCellStyle" TargetType="DataGridCell">
+            <Setter Property="Background" Value="#EAF4FF" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding WritesKind}" Value="{x:Static vm:SignalKind.Warning}">
+                    <Setter Property="Background" Value="#FDECEC" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="#12263A" Padding="20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="{DynamicResource AppTitle}" FontSize="24" FontWeight="SemiBold" Foreground="White" />
+                    <TextBlock Text="{Binding HeaderSummary}" Foreground="#DDE7F0" Margin="0,4,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="{DynamicResource Refresh}" Command="{Binding RefreshCommand}" />
+                    <Button Content="{DynamicResource ExportJson}" Command="{Binding ExportJsonCommand}" />
+                    <Button Content="{DynamicResource ExportHtml}" Command="{Binding ExportHtmlCommand}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Margin="18">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Text="{Binding Status}" FontWeight="SemiBold" Margin="0,0,0,10" />
+
+            <TabControl Grid.Row="1">
+                <TabItem Header="{DynamicResource Dashboard}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="12">
+                            <UniformGrid Columns="3">
+                                <Border Style="{StaticResource Panel}" Margin="0,0,10,14">
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource EstimatedUsage}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding UsageScore}" FontSize="42" FontWeight="Bold" />
+                                        <TextBlock Text="{Binding UsageLevel}" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource Panel}" Margin="0,0,10,14">
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource GeneralCondition}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding ConditionScore}" FontSize="42" FontWeight="Bold" />
+                                        <TextBlock Text="{Binding ConditionLevel}" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Style="{StaticResource Panel}">
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource ConfidenceLabel}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Confidence}" FontSize="42" FontWeight="Bold" />
+                                        <TextBlock Text="{Binding DiagnosticSummary}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+                            <Border Style="{StaticResource Panel}">
+                                <StackPanel>
+                                    <TextBlock Text="{DynamicResource AlertsTitle}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,8" />
+                                    <ItemsControl ItemsSource="{Binding Alerts}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,3" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="{DynamicResource System}">
+                    <DataGrid ItemsSource="{Binding SystemRows}" AutoGenerateColumns="False" IsReadOnly="True" Margin="12" RowStyle="{StaticResource SignalRowStyle}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{DynamicResource Field}" Binding="{Binding Name}" Width="220" />
+                            <DataGridTextColumn Header="{DynamicResource Value}" Binding="{Binding Value}" Width="*" />
+                            <DataGridTextColumn Header="{DynamicResource Source}" Binding="{Binding Source}" Width="260" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </TabItem>
+
+                <TabItem Header="{DynamicResource Hardware}">
+                    <Grid Margin="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <DataGrid ItemsSource="{Binding HardwareRows}" AutoGenerateColumns="False" IsReadOnly="True" RowStyle="{StaticResource SignalRowStyle}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{DynamicResource Field}" Binding="{Binding Name}" Width="220" />
+                                <DataGridTextColumn Header="{DynamicResource Value}" Binding="{Binding Value}" Width="*" />
+                                <DataGridTextColumn Header="{DynamicResource Source}" Binding="{Binding Source}" Width="260" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding GpuRows}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,12,0,0" RowStyle="{StaticResource SignalRowStyle}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{DynamicResource Gpu}" Binding="{Binding Name}" Width="*" />
+                                <DataGridTextColumn Header="{DynamicResource Vram}" Binding="{Binding Value}" Width="160" />
+                                <DataGridTextColumn Header="{DynamicResource DriverSource}" Binding="{Binding Source}" Width="320" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="{DynamicResource Storage}">
+                    <DataGrid ItemsSource="{Binding StorageRows}" AutoGenerateColumns="False" IsReadOnly="True" Margin="12">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{DynamicResource StorageModel}" Binding="{Binding Model}" Width="*" />
+                            <DataGridTextColumn Header="{DynamicResource Serial}" Binding="{Binding Serial}" Width="160" />
+                            <DataGridTextColumn Header="{DynamicResource Capacity}" Binding="{Binding Capacity}" Width="110" />
+                            <DataGridTextColumn Header="{DynamicResource Bus}" Binding="{Binding Bus}" Width="90" />
+                            <DataGridTextColumn Header="{DynamicResource Drives}" Binding="{Binding Drives}" Width="100" />
+                            <DataGridTextColumn Header="{DynamicResource PowerOnHours}" Binding="{Binding PowerOnHours}" Width="80" CellStyle="{StaticResource PowerOnHoursCellStyle}" />
+                            <DataGridTextColumn Header="{DynamicResource PowerCycles}" Binding="{Binding PowerCycles}" Width="90" CellStyle="{StaticResource PowerCyclesCellStyle}" />
+                            <DataGridTextColumn Header="{DynamicResource Health}" Binding="{Binding Health}" Width="80" CellStyle="{StaticResource StorageHealthCellStyle}" />
+                            <DataGridTextColumn Header="{DynamicResource WritesGb}" Binding="{Binding WritesGb}" Width="90" CellStyle="{StaticResource WritesCellStyle}" />
+                            <DataGridTextColumn Header="{DynamicResource SmartSource}" Binding="{Binding SmartSource}" Width="180" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </TabItem>
+
+                <TabItem Header="{DynamicResource Battery}">
+                    <DataGrid ItemsSource="{Binding BatteryRows}" AutoGenerateColumns="False" IsReadOnly="True" Margin="12" RowStyle="{StaticResource SignalRowStyle}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{DynamicResource Field}" Binding="{Binding Name}" Width="220" />
+                            <DataGridTextColumn Header="{DynamicResource Value}" Binding="{Binding Value}" Width="*" />
+                            <DataGridTextColumn Header="{DynamicResource Source}" Binding="{Binding Source}" Width="260" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </TabItem>
+
+                <TabItem Header="{DynamicResource UsageHistory}">
+                    <DataGrid ItemsSource="{Binding HistoryRows}" AutoGenerateColumns="False" IsReadOnly="True" Margin="12" RowStyle="{StaticResource SignalRowStyle}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{DynamicResource Metric}" Binding="{Binding Name}" Width="260" />
+                            <DataGridTextColumn Header="{DynamicResource Value}" Binding="{Binding Value}" Width="*" />
+                            <DataGridTextColumn Header="{DynamicResource Source}" Binding="{Binding Source}" Width="260" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </TabItem>
+
+                <TabItem Header="{DynamicResource NetworkDevices}">
+                    <Grid Margin="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <DataGrid ItemsSource="{Binding NetworkRows}" AutoGenerateColumns="False" IsReadOnly="True" RowStyle="{StaticResource SignalRowStyle}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{DynamicResource Adapter}" Binding="{Binding Name}" Width="*" />
+                                <DataGridTextColumn Header="{DynamicResource Mac}" Binding="{Binding Value}" Width="160" />
+                                <DataGridTextColumn Header="{DynamicResource TypeStatus}" Binding="{Binding Source}" Width="260" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding ProblemDeviceRows}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,12,0,0" RowStyle="{StaticResource SignalRowStyle}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{DynamicResource Device}" Binding="{Binding Name}" Width="*" />
+                                <DataGridTextColumn Header="{DynamicResource Status}" Binding="{Binding Value}" Width="180" />
+                                <DataGridTextColumn Header="{DynamicResource Source}" Binding="{Binding Source}" Width="260" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="{DynamicResource FinalDiagnostic}">
+                    <Grid Margin="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <DataGrid ItemsSource="{Binding UsageContributions}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,0,8,0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{DynamicResource UsageSignal}" Binding="{Binding Signal}" Width="*" />
+                                <DataGridTextColumn Header="{DynamicResource Value}" Binding="{Binding RawValue}" Width="90" />
+                                <DataGridTextColumn Header="{DynamicResource Weight}" Binding="{Binding Weight}" Width="70" />
+                                <DataGridTextColumn Header="Score" Binding="{Binding NormalizedScore}" Width="80" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <DataGrid Grid.Column="1" ItemsSource="{Binding ConditionContributions}" AutoGenerateColumns="False" IsReadOnly="True" Margin="8,0,0,0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{DynamicResource ConditionSignal}" Binding="{Binding Signal}" Width="*" />
+                                <DataGridTextColumn Header="{DynamicResource Value}" Binding="{Binding RawValue}" Width="90" />
+                                <DataGridTextColumn Header="{DynamicResource Weight}" Binding="{Binding Weight}" Width="70" />
+                                <DataGridTextColumn Header="{DynamicResource Risk}" Binding="{Binding NormalizedScore}" Width="80" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+
+            <TextBlock Grid.Row="2" Text="{Binding Footer}" Foreground="#5D6D7E" Margin="0,10,0,0" />
+        </Grid>
+    </DockPanel>
+</Window>
