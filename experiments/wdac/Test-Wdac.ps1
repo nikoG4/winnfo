@@ -49,7 +49,7 @@ public static class WdacDeniedProbe {
    Result 'Crear MSI de laboratorio' (Test-Path $allowedMsi) 'MSI sin payload, no se instala'
  }catch{Result 'Crear MSI de laboratorio' $false $_.Exception.Message}
  $manifest=Join-Path $workspace 'allowlist.json'
- @{Files=@($allowed);Packages=@()} | ConvertTo-Json | Set-Content $manifest -Encoding UTF8
+ @{PolicyId='{D53A11E4-5FF4-4B69-AFAA-2B0C133AD415}';Files=@($allowed,$approvedScript,$allowedMsi);Packages=@()} | ConvertTo-Json | Set-Content $manifest -Encoding UTF8
  $output=Join-Path $workspace 'output'
  & (Join-Path $PSScriptRoot 'Build-Wdac.ps1') -Manifest $manifest -OutputDirectory $output | Out-Host
  $r=Get-Content (Join-Path $output 'build-report.json') -Raw | ConvertFrom-Json
