@@ -139,11 +139,33 @@ public static class AllowedProbe {
         Probe $approved $true 'Ejecucion real EXE permitido'
         Probe $different $false 'Ejecucion real EXE en Program Files rechazado'
         Probe $desktopExe $true 'Ejecucion real de EXE permitido por hash'
-        # No ejecutamos WinRAR en caso de fallo para evitar instalar sin permiso.
+        if(Test-Path $winrar) {
+            # El instalador original se lanza con /?, en VM desechable;
+            # cualquier proceso iniciado es FALLO y se termina inmediatamente.
+            $started=$null
+            try {
+                $started=Start-Process -FilePath $winrar -ArgumentList '/?' -PassThru -ErrorAction Stop
+                Result 'Lanzamiento REAL WinRAR desde escritorio bloqueado' $false "SE INICIO PID=$($started.Id)"
+            } catch {
+                Result 'Lanzamiento REAL WinRAR desde escritorio bloqueado' $true $_.Exception.Message
+            } finally {
+                if($started) { Stop-Process -Id $started.Id -Force -ErrorAction SilentlyContinue }
+            }
+        }
     }
 } catch {
     Result 'Error de infraestructura/generacion' $false $_.Exception.Message
 } finally {
+    if($Phase -eq 'enforce') {
+        # Pruebas reales solo en runner descartable. Restaurar el backup,
+        # para que acciones/upload-artifact no quede bloqueado por DLL/EXE.
+        try {
+            & (Join-Path $here 'Aplicar-ListaBlanca-Corregida.ps1') -Accion Revertir -Confirm:$false
+            Result 'Restaurar politica original del runner' $true 'Backup anterior-local.xml'
+        } catch {
+            Result 'Restaurar politica original del runner' $false $_.Exception.Message
+        }
+    }
     $summary=@('# Pruebas de lista blanca AppLocker corregida','','SO: '+[Environment]::OSVersion.VersionString,'Phase: '+$Phase,'','| Prueba | Estado | Detalle |','|---|---|---|')
     foreach($r in $results) {
         $summary+=('| '+$r.Name+' | '+$r.Status+' | '+($r.Info -replace '[|]','/')+' |')
