@@ -26,3 +26,5 @@ jobs:
           retention-days: 7
 
 # Re-run with effective-policy convergence polling (2026-10-15).
+
+# Trial: run as non-administrator local user.
