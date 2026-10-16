@@ -116,8 +116,11 @@ $auditId=Assert-Options $auditXml $true
 $enforceId=Assert-Options $enforceXml $false
 if($auditId -ne $enforceId) { throw 'PolicyIDs cambiaron entre Audit y Enforce' }
 # .CIP name is the full PolicyID GUID in multiple-policy format.
-$binAudit=Join-Path $OutputDirectory ('Audit-'+$auditId+'.cip')
-$binEnforce=Join-Path $OutputDirectory ('Enforce-'+$enforceId+'.cip')
+$auditDir=Join-Path $OutputDirectory 'audit'
+$enforceDir=Join-Path $OutputDirectory 'enforce'
+New-Item -ItemType Directory -Force -Path $auditDir,$enforceDir | Out-Null
+$binAudit=Join-Path $auditDir ($auditId+'.cip')
+$binEnforce=Join-Path $enforceDir ($enforceId+'.cip')
 ConvertFrom-CIPolicy -XmlFilePath $auditXml -BinaryFilePath $binAudit -ErrorAction Stop | Out-Null
 ConvertFrom-CIPolicy -XmlFilePath $enforceXml -BinaryFilePath $binEnforce -ErrorAction Stop | Out-Null
 if((Get-Item $binAudit).Length -lt 100 -or (Get-Item $binEnforce).Length -lt 100) {throw 'CIP vacio'}
