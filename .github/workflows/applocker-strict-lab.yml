@@ -1,0 +1,44 @@
+name: AppLocker strict allowlist lab
+on:
+  push:
+    branches: [ci/applocker-windows-lab-20261015]
+    paths:
+      - '.github/workflows/applocker-strict-lab.yml'
+      - 'experiments/applocker/Aplicar-ListaBlanca-Corregida.ps1'
+      - 'experiments/applocker/Test-Strict.ps1'
+      - 'experiments/applocker/lista-blanca.json'
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: 'simulate/audit/enforce (enforce can kill runner)'
+        type: choice
+        required: true
+        default: audit
+        options: [simulate, audit, enforce]
+permissions:
+  contents: read
+jobs:
+  strict:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-2025, windows-11-arm]
+    name: 'Strict allowlist - ${{ matrix.os }}'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    env:
+      STRICT_PHASE: ${{ github.event_name == 'workflow_dispatch' && inputs.phase || 'audit' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate and evaluate strict policy
+        shell: powershell
+        run: |
+          & './experiments/applocker/Test-Strict.ps1' -Phase $env:STRICT_PHASE
+      - name: Upload strict test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'strict-${{ matrix.os }}-${{ env.STRICT_PHASE }}'
+          path: experiments/applocker/strict-reports/
+          if-no-files-found: warn
+          retention-days: 7
