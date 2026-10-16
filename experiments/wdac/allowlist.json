@@ -1,0 +1,6 @@
+{
+  "Description": "Rutas exactas de archivos aprobados. El proyecto NO copia software ni descarga instaladores. Las rutas se analizan en la VM de destino.",
+  "Files": [],
+  "Packages": [],
+  "PolicyId": "{D53A11E4-5FF4-4B69-AFAA-2B0C133AD415}"
+}

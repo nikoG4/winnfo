@@ -1,0 +1,28 @@
+name: WDAC real enforcement WinRAR lab
+on:
+  push:
+    branches: [ci/wdac-whitelist-lab-20261015]
+    paths: ['.github/workflows/wdac-enforce-disposable.yml']
+permissions:
+  contents: read
+jobs:
+  disposable-win11:
+    runs-on: windows-11-arm
+    timeout-minutes: 22
+    name: 'WDAC enforce / real WinRAR / Windows 11 ARM disposable VM'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply WDAC enforced policy to disposable machine, check EXE and WinRAR, remove by ID
+        shell: powershell
+        run: |
+          & './experiments/wdac/Test-Wdac.ps1' -Phase Enforce
+      - name: Save WDAC report and CodeIntegrity logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wdac-real-block-win11-arm
+          path: experiments/wdac/reports/
+          if-no-files-found: warn
+          retention-days: 7
+
+# Repeat with actual PowerShell and CMD host diagnostics.
