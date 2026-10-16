@@ -6,7 +6,8 @@ on:
       - ci/applocker-windows-lab-20261015
     paths:
       - '.github/workflows/applocker-windows-lab.yml'
-      - 'experiments/applocker/**'
+      - 'experiments/applocker/Aplicar-ListaBlanca.original.ps1'
+      - 'experiments/applocker/Test-AppLocker.ps1'
   workflow_dispatch:
     inputs:
       mode:
