@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   test-windows:
-    name: '${{ matrix.os }} - ${{ env.APPLOCKER_MODE }}'
+    name: '${{ matrix.os }} - AppLocker'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
