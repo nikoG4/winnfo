@@ -20,6 +20,15 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference='Stop'
 Import-Module ConfigCI -ErrorAction Stop
 
+function Append-CIRules([System.Collections.ArrayList]$target,[object]$value) {
+  if($null -eq $value){return}
+  if($value -is [System.Collections.IEnumerable] -and $value -isnot [string] -and
+      $value.GetType().FullName -notlike 'Microsoft.SecureBoot.UserConfig.Rule*') {
+    foreach($entry in $value){Append-CIRules $target $entry}
+  } else {
+    [void]$target.Add($value)
+  }
+}
 function Assert-Options([string]$xmlPath,[bool]$wantAudit) {
   [xml]$doc=Get-Content -LiteralPath $xmlPath -Raw
   $opts=@($doc.SelectNodes("//*[local-name()='Rule']/*[local-name()='Option']") | ForEach-Object { [string]$_.InnerText })
@@ -77,8 +86,10 @@ foreach($file in @($data.Files)) {
     throw "WDAC no genero reglas para $path ($ext): $($_.Exception.Message)"
   }
   if($generated.Count -lt 1) { throw "No se genero regla WDAC para $path" }
-  foreach($r in $generated) { [void]$rules.Add($r) }
-  [void]$inventory.Add([pscustomobject]@{Path=$path;SHA256=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash;RuleCount=$generated.Count})
+  $before=$rules.Count
+  foreach($r in $generated) { Append-CIRules $rules $r }
+  if($rules.Count -le $before){throw "ConfigCI devolvio cero reglas nativas para $path"}
+  [void]$inventory.Add([pscustomobject]@{Path=$path;SHA256=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash;RuleCount=($rules.Count-$before)})
 }
 $installed=@(Get-AppxPackage -AllUsers -ErrorAction SilentlyContinue)
 foreach($name in @($data.Packages)) {
@@ -87,7 +98,7 @@ foreach($name in @($data.Packages)) {
   }
   $pkg=$installed | Where-Object {$_.Name -eq $name} | Select-Object -First 1
   if(-not $pkg){throw "Paquete no instalado: $name"}
-  foreach($r in @(New-CIPolicyRule -Package $pkg -ErrorAction Stop)) {[void]$rules.Add($r)}
+  foreach($r in @(New-CIPolicyRule -Package $pkg -ErrorAction Stop)) {Append-CIRules $rules $r}
 }
 Copy-Item -LiteralPath $BaseTemplate -Destination $auditXml -Force
 if($rules.Count -gt 0) {
