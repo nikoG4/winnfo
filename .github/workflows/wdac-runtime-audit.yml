@@ -1,0 +1,30 @@
+name: WDAC runtime audit smoke
+on:
+  push:
+    branches: [ci/wdac-whitelist-lab-20261015]
+    paths: ['.github/workflows/wdac-runtime-audit.yml']
+permissions:
+  contents: read
+jobs:
+  wdac-audit:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2025, windows-11-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 22
+    name: 'Real WDAC audit on ${{ matrix.os }}'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy WDAC only in AUDIT on disposable Windows VM and exercise denied EXE
+        shell: powershell
+        run: |
+          & './experiments/wdac/Test-Wdac.ps1' -Phase Audit
+      - name: Evidence and CodeIntegrity events
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'wdac-audit-runtime-${{ matrix.os }}'
+          path: experiments/wdac/reports/
+          if-no-files-found: warn
+          retention-days: 7
