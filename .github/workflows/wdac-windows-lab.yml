@@ -16,7 +16,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: wdac-${{ github.ref }}-${{ github.event_name }}
+  group: wdac-${{ github.sha }}
   cancel-in-progress: false
 jobs:
   windows:
