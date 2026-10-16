@@ -24,3 +24,5 @@ jobs:
           path: experiments/wdac/reports/
           if-no-files-found: warn
           retention-days: 7
+
+# Repeat with actual PowerShell and CMD host diagnostics.
