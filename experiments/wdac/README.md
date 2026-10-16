@@ -32,6 +32,9 @@ Ejemplo de allowlist.json: Files array con C:\Program Files\7-Zip\7zFM.exe, C:\P
 - El instalador real de WinRAR genero evento CodeIntegrity 3077; politica retirada correctamente.
 - Enlaces: https://github.com/nikoG4/winnfo/actions/runs/38832904851 y https://github.com/nikoG4/winnfo/actions/runs/38833250938
 - Esto NO equivale a validacion del primer arranque Windows 11 x64, ni al bloqueo absoluto de todos los scripts/hosts.
+- **Prueba adicional del 16/10/2026: EXE y WinRAR siguen bloqueados, PERO .PS1 y .CMD no autorizados ejecutaron acciones (markerExists=True) bajo la politica WDAC en Windows 11 ARM64.** Son controles de interprete distintos del control de EXE; la politica actual NO satisface una lista blanca absoluta de scripts. Evidencia https://github.com/nikoG4/winnfo/actions/runs/38833844268
+- MSI: las reglas por hash se generaron y compilaron correctamente, pero aun falta una prueba real de instalacion MSI con paquete funcional bajo enforcement. No confundir compilacion con bloqueo de instalador MSI.
+- Para impedir instrucciones de PowerShell/CMD se requiere restringir o eliminar hosts e interfaces de scripting en un perfil de Windows gestionado, junto con controles complementarios, y comprobar que los scripts legitimos admitidos todavia funcionan. WDAC no garantiza esta propiedad por si solo.
 
 ## Alcance y limites
 
