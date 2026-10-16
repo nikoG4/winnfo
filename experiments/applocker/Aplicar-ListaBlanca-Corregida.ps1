@@ -189,14 +189,18 @@ function Create-Policy([string]$enforcement) {
 }
 function Service-Identity {
     $s = Get-Service AppIDSvc -ErrorAction Stop
-    if($s.Status -ne 'Running') {
-        # AppIDSvc protegido: si Windows niega configurar el inicio, fallar.
+    if($s.StartType -ne 'Automatic') {
+        # Debe persistir tras un reinicio aun si el servicio YA esta Running.
+        # AppIDSvc es servicio protegido en Windows 10/11.
         & sc.exe config AppIDSvc start= auto | Out-Host
-        if($LASTEXITCODE -ne 0) { throw "No se pudo habilitar AppIDSvc (sc.exe exit $LASTEXITCODE)" }
-        Start-Service -Name AppIDSvc -ErrorAction Stop
+        if($LASTEXITCODE -ne 0) { throw "No se pudo configurar AppIDSvc en Automatic (exit $LASTEXITCODE)" }
     }
     if((Get-Service AppIDSvc).Status -ne 'Running') {
-        throw 'AppIDSvc no esta Running: no hay garantia de aplicacion'
+        Start-Service -Name AppIDSvc -ErrorAction Stop
+    }
+    $result=Get-Service AppIDSvc
+    if($result.Status -ne 'Running' -or $result.StartType -ne 'Automatic') {
+        throw "AppIDSvc no cumple Running/Automatic: status=$($result.Status), tipo=$($result.StartType)"
     }
 }
 function Assert-Effective([System.Xml.XmlDocument]$expected) {
