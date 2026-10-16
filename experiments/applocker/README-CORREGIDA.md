@@ -2,7 +2,11 @@
 
 ## Estado de pruebas
 
-Los runners Windows Server 2022 x64, Windows Server 2025 x64 y Windows 11 Enterprise ARM64 superaron la bateria de **simulacion + aplicacion en auditoria** del flujo `AppLocker strict allowlist lab`. La bateria incluye WinRAR 7.23 REAL descargado desde la pagina oficial y colocado en la carpeta `Desktop` virtual: Test-AppLockerPolicy devuelve `DeniedByDefault`. Los resultados del bloqueo efectivo se documentan en el workflow independiente `AppLocker enforcement experiment`.
+Los runners Windows Server 2022 x64, Windows Server 2025 x64 y Windows 11 Enterprise ARM64 superaron la bateria de **simulacion + aplicacion en auditoria** del flujo AppLocker strict allowlist lab. La bateria incluye WinRAR 7.23 REAL descargado desde RARLAB y colocado en un escritorio virtual: Test-AppLockerPolicy devuelve DeniedByDefault.
+
+**BLOQUEO REAL AUN NO VALIDADO: en GitHub-hosted Windows Server 2025 y Windows 11 ARM64 el EXE no aprobado se ejecuto tambien como usuario estandar, aun con politica efectiva Enabled, gpupdate /force y reinicio de AppIDSvc. Hubo 0 eventos 8004 de denegacion de EXE. Las pruebas de bloqueo real FALLARON.** Esto es un hallazgo del entorno probado; no se debe afirmar que el mismo script funcionara o fallara necesariamente en un Windows 11 x64 dedicado. Realizar prueba con VM dedicada, snapshot y usuario no administrador antes de desplegar. El rechazo de WinRAR al usuario estandar por UAC (requires elevation) NO acredita un bloqueo por AppLocker.
+
+Microsoft documenta que AppLocker NO es una proteccion de integridad de codigo garantizada y recomienda App Control for Business (WDAC) para esa exigencia. La lista blanca exacta de scripts arbitrarios tampoco esta garantizada porque PowerShell ejecuta scripts no autorizados en ConstrainedLanguage.
 
 ## Archivos
 
