@@ -77,6 +77,13 @@ public static class WdacDeniedProbe {
  }
  if($Phase -in @('Audit','Enforce')) {
   $binary=if($Phase -eq 'Audit'){$r.AuditBinary}else{$r.EnforceBinary}
+  $winrarFile=$null
+  if($Phase -eq 'Enforce') {
+   $winrarFile=Join-Path $workspace 'winrar-original-desktop-installer.exe'
+   Invoke-WebRequest 'https://www.rarlab.com/rar/winrar-x64-723.exe' -OutFile $winrarFile -UseBasicParsing -TimeoutSec 40
+   if((Get-Item $winrarFile).Length -lt 2000000){throw 'WinRAR oficial no se pudo descargar correctamente'}
+   Result 'WinRAR real descargado' $true 'Installer original de RARLAB en disco antes de aplicar bloqueo'
+  }
   if(-not (Get-Command CiTool.exe -ErrorAction SilentlyContinue)){throw 'CiTool no esta disponible'}
   $eventStart=Get-Date
   & CiTool.exe --update-policy $binary | Out-Host
@@ -88,6 +95,26 @@ public static class WdacDeniedProbe {
   Result 'Politica registrada por CiTool' ($found.Count -gt 0) "PolicyID=$deployedId"
   LaunchProbe $allowed $true 'Ejecucion EXE permitido'
   LaunchProbe $denied ($Phase -eq 'Audit') 'Ejecucion EXE prohibido'
+  if($Phase -eq 'Enforce' -and $winrarFile) {
+   $started=$null
+   $errorText=''
+   $winrarStart=Get-Date
+   try {
+    $started=Start-Process -FilePath $winrarFile -ArgumentList '/?' -PassThru -ErrorAction Stop
+   }catch{$errorText=$_.Exception.Message}
+   finally {
+    if($started){Stop-Process -Id $started.Id -Force -ErrorAction SilentlyContinue}
+   }
+   Result 'WinRAR original denegado REALMENTE' ($null -eq $started) "started=$([bool]$started); $errorText"
+   $matches=@()
+   for($attempt=0;$attempt -lt 10;$attempt++) {
+    $we=@(Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-CodeIntegrity/Operational';Id=3077;StartTime=$winrarStart.AddSeconds(-2)} -ErrorAction SilentlyContinue)
+    $matches=@($we | Where-Object {$_.Message -match 'winrar-original-desktop-installer.exe'})
+    if($matches.Count -gt 0){break}
+    Start-Sleep -Milliseconds 700
+   }
+   Result 'Evento WDAC 3077 del instalador WinRAR REAL' ($matches.Count -gt 0) "count=$($matches.Count)"
+  }
   $events=@(Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-CodeIntegrity/Operational';Id=@(3076,3077);StartTime=$eventStart} -ErrorAction SilentlyContinue)
   $eventID=if($Phase -eq 'Audit'){3076}else{3077}
   $matched=@($events | Where-Object {$_.Id -eq $eventID -and $_.Message -match 'winrar-setup-unapproved'})
