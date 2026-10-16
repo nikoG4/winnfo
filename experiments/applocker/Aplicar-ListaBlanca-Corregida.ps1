@@ -21,7 +21,8 @@ param(
     [string]$Accion = 'Generar',
     [string]$Manifest = (Join-Path $PSScriptRoot 'lista-blanca.json'),
     [string]$Salida = (Join-Path $env:ProgramData 'AppLockerListaBlanca\politica.xml'),
-    [string]$ArchivoPrueba
+    [string]$ArchivoPrueba,
+    [switch]$GenerarBloqueo
 )
 $ErrorActionPreference = 'Stop'
 $root = Join-Path $env:ProgramData 'AppLockerListaBlanca'
@@ -249,7 +250,7 @@ if($Accion -eq 'Revertir') {
     }
     return
 }
-$mode = if($Accion -eq 'Aplicar') {'Enabled'} else {'AuditOnly'}
+$mode = if($Accion -eq 'Aplicar' -or $GenerarBloqueo) {'Enabled'} else {'AuditOnly'}
 $doc = Create-Policy $mode
 Write-Host "Politica generada: Exe, Msi, Script, Appx y Dll en $mode"
 if($Accion -eq 'Generar') {
