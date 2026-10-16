@@ -1,0 +1,75 @@
+{
+  "Note": "Referencias extraidas del script AppLocker original. Esta lista NO autoriza archivos. Hay que localizar, revisar y listar EXE, DLL y otros archivos reales en allowlist.json. El WDAC no usa las reglas publisher wildcard originales.",
+  "Applications": [
+    {
+      "Name": "7-Zip v24.09",
+      "ApprovedPaths": [],
+      "Reviewed": false
+    },
+    {
+      "Name": "Adobe Acrobat Reader v24.002",
+      "ApprovedPaths": [],
+      "Reviewed": false
+    },
+    {
+      "Name": "DBeaver v25.0",
+      "ApprovedPaths": [],
+      "Reviewed": false
+    },
+    {
+      "Name": "Figma v124x",
+      "ApprovedPaths": [],
+      "Reviewed": false
+    },
+    {
+      "Name": "Google Chrome v126x",
+      "ApprovedPaths": [],
+      "Reviewed": false
+    },
+    {
+      "Name": "LibreOffice v24.8",
+      "ApprovedPaths": [],
+      "Reviewed": false
+    },
+    {
+      "Name": "Microsoft 365 v2404",
+      "ApprovedPaths": [],
+      "Reviewed": false
+    },
+    {
+      "Name": "Microsoft Teams v1.6",
+      "ApprovedPaths": [],
+      "Reviewed": false
+    },
+    {
+      "Name": "Notepad++ v8.7",
+      "ApprovedPaths": [],
+      "Reviewed": false
+    },
+    {
+      "Name": "Postman v11.x",
+      "ApprovedPaths": [],
+      "Reviewed": false
+    },
+    {
+      "Name": "Slack v4.x",
+      "ApprovedPaths": [],
+      "Reviewed": false
+    },
+    {
+      "Name": "VLC media player v3.0.21",
+      "ApprovedPaths": [],
+      "Reviewed": false
+    },
+    {
+      "Name": "Visual Studio Code v1.105",
+      "ApprovedPaths": [],
+      "Reviewed": false
+    },
+    {
+      "Name": "WinSCP v6.4",
+      "ApprovedPaths": [],
+      "Reviewed": false
+    }
+  ]
+}
