@@ -3,7 +3,8 @@
 param([ValidateSet('simulate','audit','enforce')][string]$Phase='simulate')
 $ErrorActionPreference='Stop'
 $here=$PSScriptRoot
-$work=Join-Path $env:RUNNER_TEMP 'AppLockerStrictLab'
+$scratch=if($env:RUNNER_TEMP){$env:RUNNER_TEMP}else{$env:TEMP}
+$work=Join-Path $scratch 'AppLockerStrictLab'
 New-Item -ItemType Directory -Path $work -Force | Out-Null
 $results=New-Object 'System.Collections.Generic.List[object]'
 function Result([string]$name,[bool]$ok,[string]$info) {
@@ -212,4 +213,5 @@ public static class AllowedProbe {
         if(Test-Path $xmlPath){Copy-Item $xmlPath (Join-Path $out 'generated-policy.xml') -Force}
     }
 }
+Write-Host "Reporte: $(Join-Path $work 'report.md')"
 if(@($results | Where-Object {$_.Status -eq 'FAIL'}).Count -gt 0){exit 1}
