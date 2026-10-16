@@ -1,0 +1,5 @@
+{
+  "Description": "Rutas exactas de archivos aprobados. El proyecto NO copia software ni descarga instaladores. Las rutas se analizan en la VM de destino.",
+  "Files": [],
+  "Packages": []
+}
