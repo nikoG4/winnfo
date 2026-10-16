@@ -34,7 +34,7 @@ try {
     $src = Get-Content -LiteralPath $sourcePath -Raw -Encoding UTF8
     $tokens = $null; $parseErrors = $null
     $null = [System.Management.Automation.Language.Parser]::ParseInput($src,[ref]$tokens,[ref]$parseErrors)
-    if (@($parseErrors).Count -gt 0) { throw "Error de sintaxis PowerShell: $($parseErrors | Out-String)" }
+    if ($parseErrors -and $parseErrors.Count -gt 0) { throw "Error de sintaxis PowerShell: $($parseErrors | Out-String)" }
     Check 'Sintaxis del PowerShell' 'PASS' 'Parseado sin ejecucion'
 
     $match = [regex]::Match($src,'(?ms)^\$Xml\s*=\s*@''\r?\n(?<xml>.*?)\r?\n''@\s*$')
