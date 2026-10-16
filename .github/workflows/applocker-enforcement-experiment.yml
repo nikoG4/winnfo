@@ -24,3 +24,5 @@ jobs:
           path: experiments/applocker/strict-reports/
           if-no-files-found: warn
           retention-days: 7
+
+# Re-run with effective-policy convergence polling (2026-10-15).
