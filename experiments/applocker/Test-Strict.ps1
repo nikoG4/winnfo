@@ -159,6 +159,11 @@ public static class AllowedProbe {
         CheckDecision $publicDenied $false 'Usuario estandar: politica efectiva deberia denegar EXE' $xmlPath
         Probe $publicApproved $true 'Usuario estandar: EXE permitido realmente ejecuta' $userCredential
         Probe $publicDenied $false 'Usuario estandar: EXE no aprobado REALMENTE bloqueado' $userCredential
+        try {
+            $ev=@(Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-AppLocker/EXE and DLL'; Id=@(8002,8003,8004)} -MaxEvents 20 -ErrorAction SilentlyContinue)
+            foreach($e in $ev) {Write-Host ("AppLocker event {0}: {1}" -f $e.Id, (($e.Message -replace '[\r\n]+',' ').Substring(0,[Math]::Min(220,($e.Message -replace '[\r\n]+',' ').Length))))}
+            Result 'Existe evento de bloqueo 8004' (@($ev | Where-Object {$_.Id -eq 8004}).Count -gt 0) "events=$($ev.Count)"
+        } catch {Result 'Existe evento de bloqueo 8004' $false $_.Exception.Message}
         # El instalador original se lanza con /? y se finaliza si llega a iniciar.
         if(Test-Path $publicWinrar) {
             $unexpected=$null
@@ -166,7 +171,11 @@ public static class AllowedProbe {
                 $unexpected=Start-Process -FilePath $publicWinrar -ArgumentList '/?' -Credential $userCredential -PassThru -ErrorAction Stop
                 Result 'Usuario estandar: WinRAR real denegado' $false "PID iniciado $($unexpected.Id)"
             } catch {
-                Result 'Usuario estandar: WinRAR real denegado' $true $_.Exception.Message
+                # UAC "requires elevation" NO es AppLocker; solo aprobar cuando
+                # el mensaje identifica bloqueo por politicas. El resto falla.
+                $message=$_.Exception.Message
+                $policyDenied=($message -match '(?i)group policy|blocked by.*policy|administrador del sistema.*bloque')
+                Result 'Usuario estandar: WinRAR real denegado por AppLocker' $policyDenied $message
             } finally {
                 if($unexpected){Stop-Process -Id $unexpected.Id -Force -ErrorAction SilentlyContinue}
             }
