@@ -1,0 +1,26 @@
+name: AppLocker enforcement experiment
+on:
+  push:
+    branches: [ci/applocker-windows-lab-20261015]
+    paths: ['.github/workflows/applocker-enforcement-experiment.yml']
+permissions:
+  contents: read
+jobs:
+  disposable-vm:
+    name: Real enforcement on disposable Windows 2025
+    runs-on: windows-2025
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test real AppLocker enforcement and rollback
+        shell: powershell
+        run: |
+          & './experiments/applocker/Test-Strict.ps1' -Phase enforce
+      - name: Upload report (if runner survived)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: strict-real-enforce-2025
+          path: experiments/applocker/strict-reports/
+          if-no-files-found: warn
+          retention-days: 7
