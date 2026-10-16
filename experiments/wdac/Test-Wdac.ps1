@@ -12,6 +12,10 @@ function Result([string]$name,[bool]$ok,[string]$detail) {
  $script:results.Add([pscustomobject]@{Name=$name;Status=$status;Detail=$detail})
  Write-Host "[$status] $name : $detail"
 }
+function Observation([string]$name,[string]$detail) {
+ $script:results.Add([pscustomobject]@{Name=$name;Status='OBSERVED';Detail=$detail})
+ Write-Host "[OBSERVED] $name : $detail"
+}
 function LaunchProbe([string]$file,[bool]$shouldWork,[string]$label) {
  $ran=$false;$msg=''
  try {
@@ -114,6 +118,21 @@ public static class WdacDeniedProbe {
     Start-Sleep -Milliseconds 700
    }
    Result 'Evento WDAC 3077 del instalador WinRAR REAL' ($matches.Count -gt 0) "count=$($matches.Count)"
+  }
+  if($Phase -eq 'Enforce') {
+   # Script-host behavior diagnostic; not a guaranteed lock-down test.
+   $psMarker=Join-Path $workspace 'wdac-unapproved-ps1-ran.txt'
+   $cmdMarker=Join-Path $workspace 'wdac-unapproved-cmd-ran.txt'
+   $badPs=Join-Path $workspace 'wdac-unapproved.ps1'
+   $badCmd=Join-Path $workspace 'wdac-unapproved.cmd'
+   Set-Content -LiteralPath $badPs -Value ("Set-Content -LiteralPath '"+$psMarker+"' -Value 'script-ran'") -Encoding ASCII
+   Set-Content -LiteralPath $badCmd -Value ('@echo off'+[Environment]::NewLine+'echo cmd-ran > "'+$cmdMarker+'"') -Encoding ASCII
+   try { & (Join-Path $PSHOME 'powershell.exe') -NoProfile -ExecutionPolicy Bypass -File $badPs *>&1 | Out-Host }
+   catch {Write-Host "PS1 host returned: $($_.Exception.Message)"}
+   Observation 'Unapproved PS1 ran Set-Content' ("markerExists="+(Test-Path $psMarker))
+   try { & $env:ComSpec /d /c $badCmd | Out-Host }
+   catch {Write-Host "CMD host returned: $($_.Exception.Message)"}
+   Observation 'Unapproved CMD ran echo' ("markerExists="+(Test-Path $cmdMarker))
   }
   $events=@(Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-CodeIntegrity/Operational';Id=@(3076,3077);StartTime=$eventStart} -ErrorAction SilentlyContinue)
   $eventID=if($Phase -eq 'Audit'){3076}else{3077}
