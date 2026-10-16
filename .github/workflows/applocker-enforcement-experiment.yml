@@ -7,8 +7,12 @@ permissions:
   contents: read
 jobs:
   disposable-vm:
-    name: Real enforcement on disposable Windows 2025
-    runs-on: windows-2025
+    name: Real enforcement on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2025, windows-11-arm]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +24,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: strict-real-enforce-2025
+          name: strict-real-enforce-${{ matrix.os }}
           path: experiments/applocker/strict-reports/
           if-no-files-found: warn
           retention-days: 7
