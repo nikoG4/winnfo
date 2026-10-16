@@ -200,21 +200,39 @@ function Service-Identity {
     }
 }
 function Assert-Effective([System.Xml.XmlDocument]$expected) {
-    [xml]$effective = Get-AppLockerPolicy -Effective -Xml -ErrorAction Stop
-    foreach($type in @('Exe','Msi','Script','Appx','Dll')) {
-        $e = $expected.SelectSingleNode("/AppLockerPolicy/RuleCollection[@Type='$type']")
-        $a = $effective.SelectSingleNode("/AppLockerPolicy/RuleCollection[@Type='$type']")
-        if(-not $a -or $a.EnforcementMode -ne $e.EnforcementMode) {
-            throw "No coincide enforcement $type. Esperado=$($e.EnforcementMode), efectivo=$($a.EnforcementMode)"
-        }
-        foreach($rule in @($e.SelectNodes('./*'))) {
-            $id = $rule.GetAttribute('Id')
-            if(-not $a.SelectSingleNode("./*[@Id='$id']")) {
-                throw "No se aplico la regla $id de $type (GPO/CSP puede anular politica local)"
+    $lastError = ''
+    # Get-AppLockerPolicy -Effective puede actualizarse de forma diferida luego
+    # de Set-AppLockerPolicy (especialmente AuditOnly -> Enabled). No asumir
+    # exito sin comprobar todas las colecciones y todas las reglas.
+    for($attempt=0;$attempt -lt 20;$attempt++) {
+        $lastError = ''
+        [xml]$effective = Get-AppLockerPolicy -Effective -Xml -ErrorAction Stop
+        foreach($type in @('Exe','Msi','Script','Appx','Dll')) {
+            $e = $expected.SelectSingleNode("/AppLockerPolicy/RuleCollection[@Type='$type']")
+            $a = $effective.SelectSingleNode("/AppLockerPolicy/RuleCollection[@Type='$type']")
+            if(-not $a -or $a.EnforcementMode -ne $e.EnforcementMode) {
+                $realMode = if($a){$a.EnforcementMode}else{'ausente'}
+                $lastError = "Enforcement $type esperado=$($e.EnforcementMode), efectivo=$realMode"
+                break
             }
+            foreach($rule in @($e.SelectNodes('./*'))) {
+                $id = $rule.GetAttribute('Id')
+                if(-not $a.SelectSingleNode("./*[@Id='$id']")) {
+                    $lastError = "Falta regla $id de $type en politica efectiva"
+                    break
+                }
+            }
+            if($lastError){break}
         }
+        if(-not $lastError) {
+            Write-Host "OK: politica efectiva coincide ($($attempt+1) lectura/s)"
+            return
+        }
+        Start-Sleep -Seconds 1
     }
-    Write-Host 'OK: reglas y modos presentes en la politica efectiva'
+    [xml]$local = Get-AppLockerPolicy -Local -Xml -ErrorAction Stop
+    $localExe = $local.SelectSingleNode("/AppLockerPolicy/RuleCollection[@Type='Exe']")
+    throw "Politica EFECTIVA no coincide tras 20s. $lastError; EXE local=$($localExe.EnforcementMode). Revisar GPO/CSP."
 }
 function Probe([string]$file) {
     if(-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "No existe $file" }
