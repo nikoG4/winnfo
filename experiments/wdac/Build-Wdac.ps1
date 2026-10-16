@@ -107,6 +107,15 @@ if($rules.Count -gt 0) {
 # The imported Microsoft template retains Windows OS signers. NEVER AllowAll.xml.
 # Reset Policy ID ONCE, then copy XML so Audit and Enforce use the SAME ID.
 Set-CIPolicyIdInfo -FilePath $auditXml -PolicyName 'WDAC Reviewed Allowlist Lab' -ResetPolicyID -ErrorAction Stop | Out-Null
+# The same logical policy MUST retain its GUID across regenerations;
+# otherwise an old enforced policy can accumulate and become hard to remove.
+if($data.PSObject.Properties['PolicyId'] -and $data.PolicyId) {
+  $stable='{'+([guid]([string]$data.PolicyId)).ToString().ToUpperInvariant()+'}'
+  [xml]$identityXml=Get-Content -LiteralPath $auditXml -Raw
+  $identityXml.SelectSingleNode("//*[local-name()='PolicyID']").InnerText=$stable
+  $identityXml.SelectSingleNode("//*[local-name()='BasePolicyID']").InnerText=$stable
+  $identityXml.Save($auditXml)
+}
 Set-RuleOption -FilePath $auditXml -Option 0 -ErrorAction Stop  # UMCI
 Set-RuleOption -FilePath $auditXml -Option 6 -ErrorAction Stop  # unsigned in LAB
 Set-RuleOption -FilePath $auditXml -Option 16 -ErrorAction Stop # update no reboot
