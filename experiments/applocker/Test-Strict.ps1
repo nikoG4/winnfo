@@ -171,21 +171,7 @@ public static class AllowedProbe {
                 if($unexpected){Stop-Process -Id $unexpected.Id -Force -ErrorAction SilentlyContinue}
             }
         }
-        # Se deja el experimento de administrador como observacion, no criterio
-        # de aprobacion: un admin local puede alterar la politica.
-        if(Test-Path $winrar -and $false) {
-            # El instalador original se lanza con /?, en VM desechable;
-            # cualquier proceso iniciado es FALLO y se termina inmediatamente.
-            $started=$null
-            try {
-                $started=Start-Process -FilePath $winrar -ArgumentList '/?' -PassThru -ErrorAction Stop
-                Result 'Lanzamiento REAL WinRAR desde escritorio bloqueado' $false "SE INICIO PID=$($started.Id)"
-            } catch {
-                Result 'Lanzamiento REAL WinRAR desde escritorio bloqueado' $true $_.Exception.Message
-            } finally {
-                if($started) { Stop-Process -Id $started.Id -Force -ErrorAction SilentlyContinue }
-            }
-        }
+
     }
 } catch {
     Result 'Error de infraestructura/generacion' $false $_.Exception.Message
