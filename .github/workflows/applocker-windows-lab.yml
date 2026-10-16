@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, windows-2025]
+        os: [windows-2022, windows-2025, windows-11-arm]
     env:
       APPLOCKER_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'audit' }}
     steps:
