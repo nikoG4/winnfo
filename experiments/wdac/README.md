@@ -8,6 +8,7 @@ Se usa App Control for Business (WDAC), no AppLocker. Es una politica BASE en fo
 
 - Build-Wdac.ps1: compila XML y CIP de audit y enforce sin modificar Code Integrity.
 - allowlist.json: rutas exactas de archivos y nombres de paquetes aprobados (inicialmente vacio).
+- catalogo-original-14.json: nombres de las catorce aplicaciones del catalogo AppLocker original, SOLO para revision. No crean reglas WDAC sin rutas y hashes reales.
 - Manage-Wdac.ps1: acciones separadas Audit, Enforce, Remove, Status y Events.
 - Test-Wdac.ps1: pruebas de ConfigCI y eventos del sistema en GitHub-hosted Windows.
 
@@ -21,6 +22,16 @@ Se usa App Control for Business (WDAC), no AppLocker. Es una politica BASE en fo
 6. Revisar status y eventos reales 3077. Para restaurar: .\Manage-Wdac.ps1 -Action Remove -Confirm:$false. En algunas versiones es necesario reiniciar para aplicar/remover.
 
 Ejemplo de allowlist.json: Files array con C:\Program Files\7-Zip\7zFM.exe, C:\Program Files\7-Zip\7z.dll, C:\Aprobados\instalador.exe, Packages array vacio. El ejemplo NO se debe copiar como si esos archivos existieran: cada ruta se valida en la maquina.
+
+
+## Evidencia de ejecucion real comprobada
+
+- Compilacion WDAC con EXE + PS1 + MSI (mismo CIP) superada en Windows Server 2022 y Windows 11 ARM64.
+- Auditoria REAL en Windows 11 ARM64 superada: EXE no autorizado ejecuto en audit y genero evento CodeIntegrity 3076; politica retirada.
+- Bloqueo REAL en Windows 11 ARM64 superado: EXE no autorizado y ejecutable original WinRAR x64-723 descargado de RARLAB NO iniciaron; Error de Windows: An Application Control policy has blocked this file.
+- El instalador real de WinRAR genero evento CodeIntegrity 3077; politica retirada correctamente.
+- Enlaces: https://github.com/nikoG4/winnfo/actions/runs/38832904851 y https://github.com/nikoG4/winnfo/actions/runs/38833250938
+- Esto NO equivale a validacion del primer arranque Windows 11 x64, ni al bloqueo absoluto de todos los scripts/hosts.
 
 ## Alcance y limites
 
