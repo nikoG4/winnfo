@@ -291,6 +291,21 @@ if($PSCmdlet.ShouldProcess('AppLocker','guardar backup, reemplazar politica loca
     # No hay borrado previo que deje una ventana sin politica.
     Set-AppLockerPolicy -XmlPolicy $Salida -ErrorAction Stop
     Service-Identity
+    if($Accion -eq 'Aplicar') {
+        # Microsoft documenta gpupdate /force para refrescar directivas AppLocker.
+        # Que Get-AppLockerPolicy diga Enabled NO prueba bloqueo real.
+        & gpupdate.exe /target:computer /force /wait:30 | Out-Host
+        if($LASTEXITCODE -ne 0) {
+            throw "gpupdate.exe no pudo actualizar la directiva (exit $LASTEXITCODE)"
+        }
+        try {
+            Restart-Service AppIDSvc -Force -ErrorAction Stop
+            Write-Host 'AppIDSvc reiniciado para cargar la directiva'
+        } catch {
+            Write-Warning "AppIDSvc es protegido y puede rechazar reinicio: $($_.Exception.Message)"
+        }
+        Service-Identity
+    }
     Assert-Effective $doc
     Write-Host 'ATENCION: validar ejecucion real como usuario NO ADMINISTRADOR y eventos AppLocker.'
     Write-Host 'Una politica AppLocker no impide PowerShell -Command ni el CLM de .ps1 bloqueados.'
