@@ -1,0 +1,45 @@
+name: WDAC allowlist Windows lab
+on:
+  push:
+    branches: [ci/wdac-whitelist-lab-20261015]
+    paths:
+      - '.github/workflows/wdac-windows-lab.yml'
+      - 'experiments/wdac/**'
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: 'Build is safe; Audit/Enforce are temporary kernel policy tests on disposable runners'
+        required: true
+        default: Build
+        type: choice
+        options: [Build, Audit, Enforce]
+permissions:
+  contents: read
+concurrency:
+  group: wdac-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: false
+jobs:
+  windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-2025, windows-11-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    name: 'WDAC ${{ matrix.os }}'
+    env:
+      WDAC_PHASE: ${{ github.event_name == 'workflow_dispatch' && inputs.phase || 'Build' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test WDAC policies
+        shell: powershell
+        run: |
+          & './experiments/wdac/Test-Wdac.ps1' -Phase $env:WDAC_PHASE
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'wdac-${{ matrix.os }}-${{ env.WDAC_PHASE }}'
+          path: experiments/wdac/reports/
+          if-no-files-found: warn
+          retention-days: 7
