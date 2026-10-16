@@ -21,9 +21,12 @@ function CheckDecision([string]$path,[bool]$shouldAllow,[string]$label,[string]$
         Result $label ($allowed -eq $shouldAllow) "result=$decision expectedAllow=$shouldAllow"
     } catch { Result $label $false $_.Exception.Message }
 }
-function Probe([string]$path,[bool]$expectRun,[string]$label) {
+function Probe([string]$path,[bool]$expectRun,[string]$label,[pscredential]$userCredential=$null) {
     try {
-        $p=Start-Process -FilePath $path -Wait -NoNewWindow -PassThru -ErrorAction Stop
+        $params=@{FilePath=$path;Wait=$true;PassThru=$true;ErrorAction='Stop'}
+        if($null -ne $userCredential) { $params['Credential']=$userCredential }
+        else { $params['NoNewWindow']=$true }
+        $p=Start-Process @params
         $ran=($p.ExitCode -eq 0)
         Result $label ($ran -eq $expectRun) "process completed=$ran exit=$($p.ExitCode)"
     } catch {
@@ -131,15 +134,46 @@ public static class AllowedProbe {
         Result 'Aplicado modo Auditoria' ($effectiveExe.EnforcementMode -eq 'AuditOnly') "EXE=$($effectiveExe.EnforcementMode)"
     }
     if($Phase -eq 'enforce') {
+        # Comprobar con un usuario estandar y NO con el administrador del runner.
+        $account='appci'+([guid]::NewGuid().ToString('N').Substring(0,8))
+        $secret='Qv6!'+([guid]::NewGuid().ToString('N').Substring(0,20))
+        $secure=ConvertTo-SecureString -String $secret -AsPlainText -Force
+        $userCredential=New-Object System.Management.Automation.PSCredential("$env:COMPUTERNAME\$account",$secure)
+        New-LocalUser -Name $account -Password $secure -PasswordNeverExpires -ErrorAction Stop | Out-Null
+        $publicDir=Join-Path $env:PUBLIC 'AppLocker-CI-Public'
+        New-Item -ItemType Directory -Path $publicDir -Force | Out-Null
+        $publicApproved=Join-Path $publicDir 'approved.exe'
+        $publicDenied=Join-Path $publicDir 'unlisted.exe'
+        $publicWinrar=Join-Path $publicDir 'winrar-x64-723.exe'
+        Copy-Item $approved $publicApproved -Force
+        Copy-Item $different $publicDenied -Force
+        if(Test-Path $winrar){Copy-Item $winrar $publicWinrar -Force}
+        # Credenciales y acceso al ejecutable validados ANTES de activar AppLocker.
+        Probe $publicApproved $true 'Preflight usuario standard ejecuta EXE aprobado' $userCredential
+
         # En runners descartables GitHub solamente. Puede matar el propio runner.
         & $script -Accion Aplicar -Manifest $config -Salida $xmlPath -Confirm:$false
         [xml]$effective=Get-AppLockerPolicy -Effective -Xml
         $effectiveExe=$effective.SelectSingleNode("/AppLockerPolicy/RuleCollection[@Type='Exe']")
         Result 'Aplicado bloqueo efectivo' ($effectiveExe.EnforcementMode -eq 'Enabled') "EXE=$($effectiveExe.EnforcementMode)"
-        Probe $approved $true 'Ejecucion real EXE permitido'
-        Probe $different $false 'Ejecucion real EXE en Program Files rechazado'
-        Probe $desktopExe $true 'Ejecucion real de EXE permitido por hash'
-        if(Test-Path $winrar) {
+        CheckDecision $publicDenied $false 'Usuario estandar: politica efectiva deberia denegar EXE' $xmlPath
+        Probe $publicApproved $true 'Usuario estandar: EXE permitido realmente ejecuta' $userCredential
+        Probe $publicDenied $false 'Usuario estandar: EXE no aprobado REALMENTE bloqueado' $userCredential
+        # El instalador original se lanza con /? y se finaliza si llega a iniciar.
+        if(Test-Path $publicWinrar) {
+            $unexpected=$null
+            try {
+                $unexpected=Start-Process -FilePath $publicWinrar -ArgumentList '/?' -Credential $userCredential -PassThru -ErrorAction Stop
+                Result 'Usuario estandar: WinRAR real denegado' $false "PID iniciado $($unexpected.Id)"
+            } catch {
+                Result 'Usuario estandar: WinRAR real denegado' $true $_.Exception.Message
+            } finally {
+                if($unexpected){Stop-Process -Id $unexpected.Id -Force -ErrorAction SilentlyContinue}
+            }
+        }
+        # Se deja el experimento de administrador como observacion, no criterio
+        # de aprobacion: un admin local puede alterar la politica.
+        if(Test-Path $winrar -and $false) {
             # El instalador original se lanza con /?, en VM desechable;
             # cualquier proceso iniciado es FALLO y se termina inmediatamente.
             $started=$null
@@ -165,6 +199,9 @@ public static class AllowedProbe {
         } catch {
             Result 'Restaurar politica original del runner' $false $_.Exception.Message
         }
+        try {
+            if($account) { Remove-LocalUser -Name $account -ErrorAction Stop }
+        } catch { Write-Warning "No se pudo eliminar cuenta de laboratorio: $($_.Exception.Message)" }
     }
     $summary=@('# Pruebas de lista blanca AppLocker corregida','','SO: '+[Environment]::OSVersion.VersionString,'Phase: '+$Phase,'','| Prueba | Estado | Detalle |','|---|---|---|')
     foreach($r in $results) {
