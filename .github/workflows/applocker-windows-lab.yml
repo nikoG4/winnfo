@@ -1,0 +1,61 @@
+name: AppLocker Windows VM lab
+
+on:
+  push:
+    branches:
+      - ci/applocker-windows-lab-20261015
+    paths:
+      - '.github/workflows/applocker-windows-lab.yml'
+      - 'experiments/applocker/Aplicar-ListaBlanca.original.ps1'
+      - 'experiments/applocker/Test-AppLocker.ps1'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Prueba de AppLocker (enforce solo en runners desechables)'
+        type: choice
+        required: true
+        default: audit
+        options:
+          - static
+          - audit
+          - enforce
+
+permissions:
+  contents: read
+
+concurrency:
+  group: applocker-lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-windows:
+    name: '${{ matrix.os }} - AppLocker'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-2025, windows-11-arm]
+    env:
+      APPLOCKER_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'audit' }}
+    steps:
+      - name: Obtener codigo de laboratorio
+        uses: actions/checkout@v4
+      - name: Version y entorno del runner
+        shell: powershell
+        run: |
+          Write-Host ('SO: ' + [Environment]::OSVersion.VersionString)
+          Get-Service AppIDSvc | Format-List Name, Status, StartType
+          whoami /groups
+      - name: Diagnosticar script de lista blanca
+        shell: powershell
+        run: |
+          & './experiments/applocker/Test-AppLocker.ps1' -Mode $env:APPLOCKER_MODE
+      - name: Adjuntar reportes de AppLocker
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'applocker-${{ matrix.os }}-${{ env.APPLOCKER_MODE }}'
+          path: experiments/applocker/reports/
+          if-no-files-found: warn
+          retention-days: 7

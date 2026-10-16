@@ -1,0 +1,5 @@
+{
+  "description": "Only list real, individually reviewed files. Every file is hashed with AppLocker Authenticode hash. Folder-wide allows and publisher wildcards are forbidden.",
+  "Files": [],
+  "PackagedApps": []
+}
